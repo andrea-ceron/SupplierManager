@@ -12,7 +12,7 @@ namespace SupplierManager.Shared
         public int SupplierProductCode { get; set; }
         public decimal Price { get; set; }
         public int MinQuantity { get; set; }
-        public int State { get; set; }
+        public string Action { get; set; }
 
     }
 }

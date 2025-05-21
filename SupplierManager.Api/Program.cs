@@ -11,11 +11,16 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<SupplierDbContext>(options => options.UseSqlServer("name=ConnectionStrings:ClientsDbContext", b => b.MigrationsAssembly("CustomerManager.Api")));
+builder.Services.AddDbContext<SupplierDbContext>(options => options.UseSqlServer("name=ConnectionStrings:SupplierDbContext", b => b.MigrationsAssembly("SupplierManager.Api")));
 
 builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+	var db = scope.ServiceProvider.GetRequiredService<SupplierDbContext>();
+	db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

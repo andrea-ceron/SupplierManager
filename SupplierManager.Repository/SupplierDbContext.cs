@@ -20,13 +20,22 @@ public class SupplierDbContext(DbContextOptions<SupplierDbContext> options): DbC
 			.WithOne(o => o.Supplier)
 			.HasForeignKey(o => o.SupplierId);
 
-		mb.Entity<Product>().HasKey(s => s.Id);
-		mb.Entity<Order>().HasKey(s => s.Id);
+		mb.Entity<Product>().HasKey(p => p.Id);
+		mb.Entity<Product>().HasMany(p => p.ProductOrders)
+					.WithOne(po => po.Product)
+					.HasForeignKey(po => po.ProductId);
+
+		mb.Entity<Order>().HasKey(o => o.Id);
+		mb.Entity<Order>().HasMany(o => o.ProductOrder)
+			.WithOne(po => po.Order)
+			.HasForeignKey(po => po.OrderId);
 
 		base.OnModelCreating(mb);
 	}
 	public DbSet<Supplier> Suppliers { get; set; }
 	public DbSet<Order> Orders { get; set; }
 	public DbSet<Product> Products { get; set; }
+	public DbSet<ProductOrder> ProductOrders { get; set; }
+
 
 }

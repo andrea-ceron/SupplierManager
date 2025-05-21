@@ -9,8 +9,7 @@
 		public string VATNumber { get; set; }
 		public string TaxCode { get; set; }
 		public string CertifiedEmail { get; set; }
-		public List<OrderDto> Orders { get; set; }
-		public List<ProductDto> Products { get; set; }
+
 
 
 	}
