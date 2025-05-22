@@ -17,9 +17,9 @@ public class SupplierController(IBusiness business, ILogger<SupplierController> 
 
 
 	[HttpPost(Name = "CreateSupplier")]
-	public async Task<ActionResult> CreateSupplier(SupplierDto supplier, List<ProductDto> products)
+	public async Task<ActionResult> CreateSupplier(CreateOrUpdateSupplierDto payload)
 	{
-		await _business.CreateSupplierAsync(supplier, products);
+		await _business.CreateSupplierAsync(payload.supplier, payload.products);
 		return Ok();
 	}
 
@@ -32,9 +32,9 @@ public class SupplierController(IBusiness business, ILogger<SupplierController> 
 	}
 
 	[HttpPut(Name = "UpdateSupplier")]
-	public async Task<ActionResult> UpdateSupplier(SupplierDto Supplier, List<ProductDto> products)
+	public async Task<ActionResult> UpdateSupplier(CreateOrUpdateSupplierDto payload)
 	{
-		await _business.UpdateSupplierAsync(Supplier, products);
+		await _business.UpdateSupplierAsync(payload.supplier, payload.products);
 		return Ok();
 	}
 

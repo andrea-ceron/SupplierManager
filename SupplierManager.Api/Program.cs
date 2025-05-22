@@ -18,8 +18,15 @@ builder.Services.AddScoped<IBusiness, Business>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
+	try
+	{
 	var db = scope.ServiceProvider.GetRequiredService<SupplierDbContext>();
-	db.Database.Migrate();
+		db.Database.Migrate();
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine(ex.Message);
+	}
 }
 
 // Configure the HTTP request pipeline.

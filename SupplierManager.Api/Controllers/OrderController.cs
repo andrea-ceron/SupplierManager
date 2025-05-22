@@ -15,9 +15,9 @@ public class OrderController(IBusiness business, ILogger<SupplierController> log
 	private readonly ILogger<SupplierController> _logger = logger;
 
 	[HttpPost(Name = "CreateOrder")]
-	public async Task<ActionResult> CreateOrderAsync(DateTime delivery, int supplierId, List<ProductOrderDto> productOrders)
+	public async Task<ActionResult> CreateOrderAsync(CreateOrderDto payload)
 	{
-		await _business.CreateOrderAsync(delivery, supplierId, productOrders);
+		await _business.CreateOrderAsync(payload.Delivery, payload.SupplierId, payload.ProductOrders);
 		return Ok();
 	}
 
