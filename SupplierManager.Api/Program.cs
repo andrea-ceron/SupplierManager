@@ -11,10 +11,18 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<SupplierDbContext>(options => options.UseSqlServer("name=ConnectionStrings:SupplierDbContext", b => b.MigrationsAssembly("SupplierManager.Api")));
+builder.Services.AddDbContext<SupplierDbContext>(options =>
+	options.UseSqlServer(
+		builder.Configuration.GetConnectionString("SupplierDbContext"),
+		b => b.MigrationsAssembly("SupplierManager.Api")
+	)
+);
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
+builder.Logging.AddConsole();
+
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

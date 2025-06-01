@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SupplierManager.Business;
 using SupplierManager.Business.Abstraction;
-using SupplierManager.Shared;
+using SupplierManager.Shared.DTO;
 
 namespace SupplierManager.Api.Controllers;
 
@@ -17,24 +17,24 @@ public class SupplierController(IBusiness business, ILogger<SupplierController> 
 
 
 	[HttpPost(Name = "CreateSupplier")]
-	public async Task<ActionResult> CreateSupplier(CreateOrUpdateSupplierDto payload)
+	public async Task<ActionResult> CreateSupplier(CreateSupplierDto payload)
 	{
-		await _business.CreateSupplierAsync(payload.supplier, payload.products);
+		await _business.CreateSupplierAsync(payload);
 		return Ok();
 	}
 
 	[HttpGet(Name = "ReadSupplier")]
-	public async Task<ActionResult> GetSupplier(int SupplierId)
+	public async Task<ActionResult<ReadSupplierDto>> GetSupplier(int SupplierId)
 	{
-		SupplierDto? Supplier = await _business.GetSupplierAsync(SupplierId);
+		ReadSupplierDto? Supplier = await _business.GetSupplierAsync(SupplierId);
 		if (Supplier == null) return NotFound("Supplier non trovato");
 		return Ok(Supplier);
 	}
 
 	[HttpPut(Name = "UpdateSupplier")]
-	public async Task<ActionResult> UpdateSupplier(CreateOrUpdateSupplierDto payload)
+	public async Task<ActionResult> UpdateSupplier(UpdateSupplierDto payload)
 	{
-		await _business.UpdateSupplierAsync(payload.supplier, payload.products);
+		await _business.UpdateSupplierAsync(payload);
 		return Ok();
 	}
 

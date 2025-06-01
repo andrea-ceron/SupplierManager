@@ -1,47 +1,44 @@
-﻿using SupplierManager.Business.Abstraction;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using SupplierManager.Business.Abstraction;
 using SupplierManager.Repository.Abstraction;
 using SupplierManager.Repository.Model;
-using SupplierManager.Shared;
+using SupplierManager.Shared.DTO;
 using System.ComponentModel.DataAnnotations;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SupplierManager.Business
 {
-	public class Business(IRepository repository) : IBusiness
+	public class Business(IRepository repository, IMapper mapper, ILogger<Business> logger) : IBusiness
 	{
-		public async Task<int> CreateOrderAsync(DateTime delivery, int supplierId, List<ProductOrderDto> products, CancellationToken ct = default)
+		#region Order
+		public async Task CreateOrderAsync(CreateOrderDto createOrderDto, CancellationToken ct = default)
 		{
-			var newOrder = await repository.CreateOrderAsync(delivery, supplierId, ct);
+			// TODO implementare verifica che permette dio notificare o mandare l errore nel caso in cui l id del prodotto non sia appartenente ad un determinato supplier
+			Order order = mapper.Map<Order>(createOrderDto);
+			List<ProductOrder> productList = mapper.Map<List<ProductOrder>>(order.ProductOrder);
+			order.ProductOrder = new List<ProductOrder>();
+
+			await repository.CreateTransaction(async () =>{
+
+			var newOrder = await repository.CreateOrderAsync(order, ct);
 			await repository.SaveChanges(ct);
-			if (newOrder == null)
-				throw new Exception("Order not created");
-			foreach (var product in products)
-			{
-				await repository.CreateProductOrderAsync(product.Quantity, product.Discount, product.ProductId, newOrder.Id, ct);
+
+				logger.LogInformation("Order created with ID: {newOrderId}", newOrder.Id);
+
+				foreach (var product in productList)
+				{
+					product.OrderId = newOrder.Id;
+					await repository.CreateProductOrderAsync(product, ct);
+				}
 				await repository.SaveChanges(ct);
-			}
-			return newOrder.Id;
+			});
 		}
-
-		public async Task CreateSupplierAsync(SupplierDto supplier, List<ProductDto> productList, CancellationToken ct = default)
-		{
-			var supplierRes = await repository.CreateSupplierAsync(supplier.CertifiedEmail, supplier.CompanyName, supplier.Email, supplier.Phone, supplier.TaxCode, supplier.VATNumber, ct);
-			await repository.SaveChanges(ct);
-			if(supplierRes == null)
-				throw new Exception("Supplier not created");
-			foreach(var product in productList)
-			{
-				var uploadedProduct = await repository.CreateProductAsync(product.SupplierProductCode, product.Price, product.MinQuantity, supplierRes.Id, ct);
-				await repository.SaveChanges(ct);
-				if(uploadedProduct == null)
-					throw new Exception("Product not created");
-			}
-
-		}
-
 		public async Task DeleteOrderAsync(int OrderId, CancellationToken ct = default)
 		{
 			var res = await repository.GetOrderByIdAsync(OrderId, ct);
+			if(res == null)
+				throw new Exception("Order not found");
 			foreach (var productOrder in res.ProductOrder)
 			{
 				await repository.DeleteProductOrder(productOrder, ct);
@@ -52,7 +49,48 @@ namespace SupplierManager.Business
 			await repository.DeleteOrderAsync(res, ct);
 			await repository.SaveChanges(ct);
 		}
+		public async Task<List<ReadOrderDto>?> GetAllOrdersBySupplierIdAsync(int SupplierId, CancellationToken ct = default)
+		{
+			List<Order>? ListOfOrder = await repository.GetOrderBySupplierIdAsync(SupplierId, ct);
+			if (ListOfOrder == null) throw new Exception("No order found");
+			List<ReadOrderDto> orderList = mapper.Map<List<ReadOrderDto>>(ListOfOrder);
+			return orderList;
+		}
+		public async Task<ReadOrderDto> GetOrderByIdAsync(int OrderId, CancellationToken ct = default)
+		{
+			var Order =  await repository.GetOrderByIdAsync(OrderId, ct);
+			if (Order == null ) throw new Exception("Order not found");
+			ReadOrderDto orderdto = mapper.Map<ReadOrderDto>(Order);
+			return orderdto;
+		}
+		#endregion
 
+		#region Supplier
+		public async Task CreateSupplierAsync(CreateSupplierDto supplierDto, CancellationToken ct = default)
+		{
+			Supplier supplier = mapper.Map<Supplier>(supplierDto);
+
+			List<Product> productList = mapper.Map<List<Product>>(supplierDto.Products);
+			supplier.Products = new List<Product>();
+
+
+			await repository.CreateTransaction(async() =>
+			{
+
+				var supplierRes = await repository.CreateSupplierAsync(supplier, ct);
+				await repository.SaveChanges(ct);
+
+				logger.LogInformation("Supplier created with ID: {supplierRes}", supplierRes.Id);
+
+				foreach (var item in productList)
+				{
+					item.SupplierId = supplierRes.Id;
+					await repository.CreateProductAsync(item, ct);
+				}
+				await repository.SaveChanges(ct);
+
+			});
+		}
 		public async Task DeleteSupplierAsync(int supplierId, CancellationToken ct = default)
 		{
 			Supplier ? res = await repository.GetSupplierById(supplierId, ct);
@@ -61,7 +99,7 @@ namespace SupplierManager.Business
 			List<Order>? OrderList = await repository.GetOrderBySupplierIdAsync(res.Id, ct);
 			if (OrderList == null)
 				throw new Exception();
-			foreach (var order in OrderList)
+			foreach(var order in OrderList)
 			{
 				await DeleteOrderAsync(order.Id, ct);
 			}
@@ -69,106 +107,99 @@ namespace SupplierManager.Business
 			List<Product>? ProductList = await repository.GetAllProductBySupplierId(res.Id, ct);
 			if (ProductList == null)
 				throw new Exception();
-			foreach (var product in ProductList)
-			{
-				await repository.DeleteProduct(product, ct);
-				await repository.SaveChanges(ct);
-			}
+			await repository.DeleteAllProductsBySupplierIdAsync(ProductList, ct);
 
 			await repository.DeleteSupplier(res, ct);
 			await repository.SaveChanges(ct);
 		}
-
-		public async Task<List<OrderDto>?> GetAllOrdersBySupplierIdAsync(int SupplierId, CancellationToken ct = default)
-		{
-			List<Order>? ListOfOrder = await repository.GetOrderBySupplierIdAsync(SupplierId, ct);
-			if (ListOfOrder == null) throw new Exception("Supplier not found");
-
-			List<OrderDto> ordersDto = new();
-			foreach (var order in ListOfOrder)
-			{
-				var newOrder = await GetOrderByIdAsync(order.Id, ct);
-				if (newOrder == null) throw new Exception("Order not found");
-				ordersDto.Add(newOrder);
-			}
-			return ordersDto;
-		}
-
-		public async Task<OrderDto> GetOrderByIdAsync(int OrderId, CancellationToken ct = default)
-		{
-			var Order =  await repository.GetOrderByIdAsync(OrderId, ct);
-			if (Order == null ) throw new Exception("Order not found");
-			List<ProductOrderDto> productOrders = new();
-			foreach(var productOrder in Order.ProductOrder)
-			{
-				ProductOrderDto productOrderDto = new()
-				{
-					Id = productOrder.Id,
-					Quantity = productOrder.Quantity,
-					Discount = productOrder.Discount,
-					ProductId = productOrder.ProductId
-				};
-				productOrders.Add(productOrderDto);
-			}
-
-			OrderDto order = new()
-			{
-				Id = Order.Id,
-				SupplierId = Order.SupplierId,
-				DeliveryDate = Order.DeliveryDate,
-				ProductOrder = productOrders
-			};
-			return order;
-		}
-
-		public async Task<SupplierDto> GetSupplierAsync(int supplierId, CancellationToken ct = default)
+		public async Task<ReadSupplierDto> GetSupplierAsync(int supplierId, CancellationToken ct = default)
 		{
 			
-			Supplier? res =  await repository.GetSupplierById(supplierId, ct);
-			if(res == null)
+			Supplier? supplier =  await repository.GetSupplierById(supplierId, ct);
+			if(supplier == null)
 			{
 				throw new Exception("da definire");
 			}
-
-			SupplierDto supplier = new()
-			{
-				Id = res.Id,
-				CertifiedEmail = res.CertifiedEmail,
-				CompanyName = res.CompanyName,
-				Email = res.Email,
-				Phone = res.Phone,
-				TaxCode = res.TaxCode,
-				VATNumber = res.VATNumber,
-
-			};
-			return supplier;
+			ReadSupplierDto supplierDto = mapper.Map<ReadSupplierDto>(supplier);
+			return supplierDto;
 		}
-
-		public async Task UpdateSupplierAsync(SupplierDto supplier, List<ProductDto> ProductsToUpdate, CancellationToken ct = default)
+		public async Task UpdateSupplierAsync(UpdateSupplierDto supplierDto, CancellationToken ct = default)
 		{
-			var updatedSupplier = await repository.UpdateSupplierAsync(supplier.Id, supplier.CertifiedEmail, supplier.CompanyName, supplier.Email, supplier.Phone, supplier.TaxCode, supplier.VATNumber, ct);
+			var model = mapper.Map<Supplier>(supplierDto);
+			var updatedSupplier = await repository.UpdateSupplierAsync(model, ct);
 			if(updatedSupplier == null)
 				throw new Exception("Supplier not updated");
-			foreach (var product in ProductsToUpdate)
-			{
-				if (product.Action == "none") continue;
-				if(product.Action == "delete")
-				{
-					var productToDelete = await repository.GetProductById(product.Id, ct);
-					await repository.DeleteProduct(productToDelete, ct);
-				}
-				if (product.Action == "update")
-				{
-					await repository.UpdateProductAsync(product.Id, product.SupplierProductCode, product.Price, product.MinQuantity, ct);
-				}
-				if(product.Action == "create")
-				{
-					await repository.CreateProductAsync(product.SupplierProductCode, product.Price, product.MinQuantity, supplier.Id, ct);
-				}
-				else throw new Exception("Action not defined");
-
-			}
-
+			await UpdateListOfProductsAsync(supplierDto.Products, ct);
 		}
+		#endregion
+
+		#region Product
+		public async Task CreateListOfProductsAsync(IEnumerable<CreateProductDto> productDto, CancellationToken ct = default)
+		{
+			List<Product> productList = mapper.Map<List<Product>>(productDto);
+			await repository.CreateTransaction(async () =>
+			{
+				var tasks = productList.Select(product => repository.CreateProductAsync(product, ct));
+				await Task.WhenAll(tasks);
+
+				await repository.SaveChanges(ct);
+			});
+
+			
+		}
+		public async Task UpdateListOfProductsAsync(IEnumerable<UpdateProductDto> productDto, CancellationToken ct = default)
+		{
+			List<Product> productList = mapper.Map<List<Product>>(productDto);
+			await repository.CreateTransaction(async () =>
+			{
+				foreach (var product in productDto)
+				{
+					if (product.Action == "none") continue;
+					if (product.Action == "delete")
+					{
+						await repository.DeleteProduct(product.Id, ct);
+					}
+					if (product.Action == "update")
+					{
+						var model = mapper.Map<Product>(product);
+						await repository.UpdateProductAsync(model, ct);
+					}
+					if (product.Action == "create")
+					{
+						var model = mapper.Map<Product>(product);
+						await repository.CreateProductAsync(model, ct);
+					}
+					else throw new Exception("Action not defined");
+
+				}
+			});
+			await repository.SaveChanges(ct);
+		}
+
+		public async Task<List<ReadProductDto>> GetProductListBySupplierId(int SupplierId, CancellationToken ct = default)
+		{
+			var productList = await repository.GetAllProductBySupplierId(SupplierId, ct);
+			if (productList == null || productList.Count == 0)
+			{
+				throw new Exception("No products found for this supplier");
+			}
+			return mapper.Map<List<ReadProductDto>>(productList);
+		}
+
+		public async Task DeleteProductAsync(int productId, CancellationToken ct = default)
+		{
+			await repository.DeleteProduct(productId, ct);
+		}
+
+
+
+		#endregion
+
+
+
+
+
+
+
 	}
 }

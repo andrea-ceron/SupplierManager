@@ -12,7 +12,7 @@ using SupplierManager.Repository;
 namespace SupplierManager.Api.Migrations
 {
     [DbContext(typeof(SupplierDbContext))]
-    [Migration("20250521211745_FirstMigration")]
+    [Migration("20250531105215_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />
@@ -144,7 +144,7 @@ namespace SupplierManager.Api.Migrations
                     b.HasOne("SupplierManager.Repository.Model.Supplier", "Supplier")
                         .WithMany("Orders")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Supplier");
@@ -155,7 +155,7 @@ namespace SupplierManager.Api.Migrations
                     b.HasOne("SupplierManager.Repository.Model.Supplier", "Supplier")
                         .WithMany("Products")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Supplier");
@@ -166,13 +166,13 @@ namespace SupplierManager.Api.Migrations
                     b.HasOne("SupplierManager.Repository.Model.Order", "Order")
                         .WithMany("ProductOrder")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SupplierManager.Repository.Model.Product", "Product")
                         .WithMany("ProductOrders")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");

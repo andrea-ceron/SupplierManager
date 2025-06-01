@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SupplierManager.Business.Abstraction;
 using SupplierManager.Business;
-using SupplierManager.Shared;
+using SupplierManager.Shared.DTO;
 
 namespace SupplierManager.Api.Controllers;
 
@@ -17,22 +17,24 @@ public class OrderController(IBusiness business, ILogger<SupplierController> log
 	[HttpPost(Name = "CreateOrder")]
 	public async Task<ActionResult> CreateOrderAsync(CreateOrderDto payload)
 	{
-		await _business.CreateOrderAsync(payload.Delivery, payload.SupplierId, payload.ProductOrders);
+		await _business.CreateOrderAsync(payload);
 		return Ok();
 	}
 
 	[HttpGet(Name = "ReadOrder")]
 	public async Task<ActionResult> GetOrderAsync(int OrderId)
 	{
-		OrderDto? Order = await _business.GetOrderByIdAsync(OrderId);
+		ReadOrderDto? Order = await _business.GetOrderByIdAsync(OrderId);
 		return Ok(Order);
 	}
 
 	[HttpGet(Name = "ReadAllOrder")]
-	public async Task<ActionResult> GetAllOrderAsync(int OrderId)
+	public async Task<ActionResult<List<ReadOrderDto>>> GetAllOrdersBySupplierIdAsync(int supplierId)
 	{
-		List<OrderDto?>? Order = await _business.GetAllOrdersBySupplierIdAsync(OrderId);
-		return Ok(Order);
+		List<ReadOrderDto>? OrderList = await _business.GetAllOrdersBySupplierIdAsync(supplierId);
+		if(OrderList == null || OrderList.Count == 0)
+			return NotFound("No orders found for this supplier");
+		return Ok(OrderList);
 	}
 
 	[HttpDelete(Name = "DeleteOrder")]

@@ -3,6 +3,7 @@ using SupplierManager.Repository.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,20 +16,38 @@ public class SupplierDbContext(DbContextOptions<SupplierDbContext> options): DbC
 		mb.Entity<Supplier>().HasKey(s => s.Id);
 		mb.Entity<Supplier>().HasMany(s => s.Orders)
 			.WithOne(o => o.Supplier)
-			.HasForeignKey(o => o.SupplierId);
+			.HasForeignKey(o => o.SupplierId)
+			.OnDelete(DeleteBehavior.Restrict);
 		mb.Entity<Supplier>().HasMany(s => s.Products)
 			.WithOne(o => o.Supplier)
-			.HasForeignKey(o => o.SupplierId);
+			.HasForeignKey(o => o.SupplierId)
+			.OnDelete(DeleteBehavior.Restrict);
+		mb.Entity<Supplier>()
+			.Property(s => s.Id)
+			.ValueGeneratedOnAdd();
 
 		mb.Entity<Product>().HasKey(p => p.Id);
 		mb.Entity<Product>().HasMany(p => p.ProductOrders)
 					.WithOne(po => po.Product)
-					.HasForeignKey(po => po.ProductId);
+					.HasForeignKey(po => po.ProductId)
+					.OnDelete(DeleteBehavior.Restrict);
+		mb.Entity<Product>()
+			.Property(s => s.Id)
+			.ValueGeneratedOnAdd();
 
 		mb.Entity<Order>().HasKey(o => o.Id);
 		mb.Entity<Order>().HasMany(o => o.ProductOrder)
 			.WithOne(po => po.Order)
-			.HasForeignKey(po => po.OrderId);
+			.HasForeignKey(po => po.OrderId)
+			.OnDelete(DeleteBehavior.Restrict);
+		mb.Entity<Order>()
+			.Property(s => s.Id)
+			.ValueGeneratedOnAdd();
+
+		mb.Entity<ProductOrder>().HasKey(s => s.Id);
+		mb.Entity<ProductOrder>()
+			.Property(s => s.Id)
+			.ValueGeneratedOnAdd();
 
 		base.OnModelCreating(mb);
 	}
