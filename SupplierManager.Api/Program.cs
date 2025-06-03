@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using SupplierManager.Api.Middlewares;
 using SupplierManager.Business;
 using SupplierManager.Business.Abstraction;
 using SupplierManager.Repository;
 using SupplierManager.Repository.Abstraction;
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SupplierDbContext>(options =>
@@ -36,8 +35,8 @@ using (var scope = app.Services.CreateScope())
 		Console.WriteLine(ex.Message);
 	}
 }
+app.UseMiddleware<ExceptionMiddleware>();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

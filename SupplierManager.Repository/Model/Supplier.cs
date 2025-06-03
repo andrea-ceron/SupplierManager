@@ -15,7 +15,7 @@ namespace SupplierManager.Repository.Model
 		public string VATNumber { get; set; }
 		public string TaxCode { get; set; }
 		public string CertifiedEmail { get; set; }
-		public List<Order> Orders { get; set; }
-		public List<Product> Products { get; set; }
+		public List<Order>? Orders { get; set; }
+		public List<Product>? Products { get; set; }
 	}
 }

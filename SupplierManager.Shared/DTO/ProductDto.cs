@@ -16,6 +16,14 @@ namespace SupplierManager.Shared.DTO
 
 	}
 
+	public class CreateProductFromSupplierControllerDto
+	{
+		public int SupplierProductCode { get; set; }
+		public decimal Price { get; set; }
+		public int MinQuantity { get; set; }
+
+	}
+
 	public class ReadProductDto
 	{
 		public int Id { get; set; }
@@ -29,12 +37,11 @@ namespace SupplierManager.Shared.DTO
 
 	public class UpdateProductDto
 	{
-		public int Id { get; set; }
-		public int SupplierProductCode { get; set; }
-		public decimal Price { get; set; }
-		public int MinQuantity { get; set; }
-		public List<UpdateProductOrderDto> ProductOrders { get; set; }
-		public string Action { get; set; } = "none"; // "create", "update", "delete", "none"
+		public int? Id { get; set; }
+		public int? SupplierProductCode { get; set; }
+		public decimal? Price { get; set; }
+		public int? MinQuantity { get; set; }
+		public int SupplierId { get; set; } 
 
 	}
 }

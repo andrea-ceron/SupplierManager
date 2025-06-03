@@ -10,7 +10,6 @@ namespace SupplierManager.Shared.DTO
     {
         public int Id { get; set; }
         public DateTime DeliveryDate { get; set; }
-		public List<UpdateProductOrderDto> ProductOrder { get; set; }
 		public int SupplierId { get; set; }
 
     }
@@ -28,6 +27,6 @@ namespace SupplierManager.Shared.DTO
 	{
 		public DateTime Delivery { get; set; }
 		public int SupplierId { get; set; }
-		public List<CreateProductOrderDto> ProductOrder { get; set; }
+		public List<CreateProductOrderFromOrderControllerDto> ProductOrder { get; set; }
 	}
 }

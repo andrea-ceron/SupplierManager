@@ -8,7 +8,7 @@
 		public string VATNumber { get; set; }
 		public string TaxCode { get; set; }
 		public string CertifiedEmail { get; set; }
-		public List<CreateProductDto> Products { get; set; }
+		public List<CreateProductFromSupplierControllerDto> Products { get; set; }
 
 	}
 
@@ -36,7 +36,6 @@
 		public string VATNumber { get; set; }
 		public string TaxCode { get; set; }
 		public string CertifiedEmail { get; set; }
-		public List<UpdateProductDto> Products { get; set; }
 
 
 	}

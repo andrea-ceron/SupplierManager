@@ -28,11 +28,17 @@ public class InputFileProfile : Profile
 		CreateMap<UpdateOrderDto, Order>();
 
 		CreateMap<CreateProductOrderDto, ProductOrder>();
+		CreateMap<CreateProductOrderFromOrderControllerDto, ProductOrder>();
+
 		CreateMap<ProductOrder, ReadProductOrderDto>();
 		CreateMap<UpdateProductOrderDto, ProductOrder>();
+
 
 		CreateMap<CreateProductDto, Product>();
 		CreateMap<Product, ReadProductDto>();
 		CreateMap<UpdateProductDto, Product>();
+		CreateMap<CreateProductFromSupplierControllerDto, Product>();
+
+
 	}
 }

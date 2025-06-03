@@ -30,9 +30,9 @@ public class ProductController(IBusiness business, ILogger<ProductController> lo
 	}
 
 	[HttpPut(Name = "UpdateProductList")]
-	public async Task<ActionResult> UpdateProductList(List<UpdateProductDto> payload)
+	public async Task<ActionResult> UpdateProductList(UpdateProductDto payload)
 	{
-		await _business.UpdateListOfProductsAsync(payload);
+		await _business.UpdateProductAsync(payload);
 		return Ok();
 	}
 

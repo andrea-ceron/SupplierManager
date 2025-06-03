@@ -17,13 +17,12 @@ namespace SupplierManager.Repository
 			await dbContext.Orders.AddAsync(model, ct);
 			return model;
 		}
-		public async Task DeleteOrderAsync(Order order, CancellationToken ct = default)
+		public async Task DeleteOrderAsync(int orderId, CancellationToken ct = default)
 		{
-
+			Order? order = await GetOrderByIdAsync(orderId, ct);
+			if (order == null) return;
 			dbContext.Orders.Remove(order);
 		}
-
-
 		public async Task<Order?> GetOrderByIdAsync(int OrderId, CancellationToken ct = default)
 		{
 			return  await dbContext.Orders
@@ -33,7 +32,7 @@ namespace SupplierManager.Repository
 				.AsNoTracking()
 				.SingleOrDefaultAsync(ct);
 		}
-		public  Task<List<Order>>? GetOrderBySupplierIdAsync(int supplierId, CancellationToken ct = default)
+		public  Task<List<Order>> GetOrderBySupplierIdAsync(int supplierId, CancellationToken ct = default)
 		{
 			return  dbContext.Orders
 				.Where(o => o.SupplierId == supplierId)
@@ -43,11 +42,14 @@ namespace SupplierManager.Repository
 				.ToListAsync(ct);
 
 		}
-		public async  Task DeleteAllOrderBySupplierIdAsync(List<Order> orderList, CancellationToken ct = default)
+		public async Task DeleteAllOrdersBySupplierIdAsync(int supplierId, CancellationToken ct = default)
 		{
+			List<Order> orderList = await GetOrderBySupplierIdAsync(supplierId, ct);
+			if (orderList == null || orderList.Count == 0) return;
 			dbContext.Orders.RemoveRange(orderList);
-				
 		}
+
+
 
 		#endregion
 
@@ -57,8 +59,10 @@ namespace SupplierManager.Repository
 			await dbContext.AddAsync(model, ct);
 			return model;
 		}
-		public async Task DeleteSupplier(Supplier supplier, CancellationToken ct = default)
+		public async Task DeleteSupplier(int supplierId, CancellationToken ct = default)
 		{
+			var supplier = await GetSupplierById(supplierId, ct);
+			if (supplier == null) return;
 			dbContext.Suppliers.Remove(supplier);
 		}
 		public async Task<Supplier?> GetSupplierById(int customerId, CancellationToken ct = default)
@@ -95,11 +99,11 @@ namespace SupplierManager.Repository
 		}
 		public Task<List<Product>> GetAllProductBySupplierId(int supplierId, CancellationToken ct = default)
 		{
-			return dbContext.Products.Where(o => o.SupplierId == supplierId).ToListAsync(ct);
+			return dbContext.Products.Where(o => o.SupplierId == supplierId).AsNoTracking().ToListAsync(ct);
 		}
 		public async Task<Product?> GetProductById(int productId, CancellationToken ct = default)
 		{
-			return await dbContext.Products.Where(p => p.Id == productId).SingleOrDefaultAsync(ct);
+			return await dbContext.Products.Where(p => p.Id == productId).AsNoTracking().SingleOrDefaultAsync(ct);
 		}
 		public async Task<Product?> UpdateProductAsync(Product model, CancellationToken ct = default)
 		{
@@ -108,21 +112,48 @@ namespace SupplierManager.Repository
 			dbContext.Products.Update(model);
 			return model;
 		}
-		public async Task DeleteAllProductsBySupplierIdAsync(List<Product> productList, CancellationToken ct = default)
+		public async Task DeleteAllProductsBySupplierIdAsync(int supplierId, CancellationToken ct = default)
 		{
-			dbContext.Products.RemoveRange(productList);
+			List<Product>? ProductList = await GetAllProductBySupplierId(supplierId, ct);
+			if (ProductList == null || ProductList.Count == 0) return;
+			dbContext.Products.RemoveRange(ProductList);
 		}
 		#endregion
 
 		#region ProductOrder
 		public async Task<ProductOrder> CreateProductOrderAsync(ProductOrder model, CancellationToken ct = default)
 		{
-			await dbContext.ProductOrders.AddAsync(model);
+			await dbContext.ProductOrders.AddAsync(model, ct);
 			return model;			
 		}
 		public async Task DeleteProductOrder(ProductOrder productOrder, CancellationToken ct = default)
 		{
 			dbContext.ProductOrders.Remove(productOrder);
+		}
+
+		public async Task<List<ProductOrder>> GetAllProductOrderByOrderIdAsync(int orderId, CancellationToken ct = default)
+		{
+			return await dbContext.ProductOrders
+				.Where(po => po.OrderId == orderId)
+				.AsNoTracking()
+				.ToListAsync(ct);
+		}
+
+		public async Task<List<ProductOrder>> GetAllProductOrderByProductIdAsync(int productId, CancellationToken ct = default)
+		{
+			return await dbContext.ProductOrders
+				.Where(po => po.ProductId == productId)
+				.AsNoTracking()
+				.ToListAsync(ct);
+		}
+
+
+
+		public async Task DeleteAllProductOrdersByOrderIdAsync(int orderId, CancellationToken ct = default)
+		{
+			var listOfProductOrder = await GetAllProductOrderByOrderIdAsync(orderId, ct);
+			if (listOfProductOrder == null || listOfProductOrder.Count == 0) return;
+			dbContext.ProductOrders.RemoveRange(listOfProductOrder);
 		}
 		#endregion
 

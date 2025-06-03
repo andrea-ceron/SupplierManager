@@ -25,7 +25,7 @@ namespace SupplierManager.Business.Abstraction
 
         public Task CreateListOfProductsAsync(IEnumerable<CreateProductDto> productDto, CancellationToken ct = default);
         public Task<List<ReadProductDto>> GetProductListBySupplierId(int SupplierId, CancellationToken ct = default);
-        public Task UpdateListOfProductsAsync(IEnumerable<UpdateProductDto> productDto, CancellationToken ct = default);
+        public Task UpdateProductAsync(UpdateProductDto productDto, CancellationToken ct = default);
 		public Task DeleteProductAsync(int productId, CancellationToken ct = default);
 
 	}
