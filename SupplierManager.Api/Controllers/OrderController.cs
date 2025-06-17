@@ -25,7 +25,7 @@ public class OrderController(IBusiness business, ILogger<SupplierController> log
 	public async Task<ActionResult> GetOrderAsync(int OrderId)
 	{
 		ReadOrderDto? Order = await _business.GetOrderByIdAsync(OrderId);
-		return Ok(Order);
+		return new JsonResult(Order);
 	}
 
 	[HttpGet(Name = "ReadAllOrder")]
