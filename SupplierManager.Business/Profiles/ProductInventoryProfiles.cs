@@ -38,6 +38,7 @@ public class InputFileProfile : Profile
 		CreateMap<Product, ReadProductDto>();
 		CreateMap<UpdateProductDto, Product>();
 		CreateMap<CreateProductFromSupplierControllerDto, Product>();
+		CreateMap<Product, ProductDtoForKafka>();
 
 
 	}

@@ -1,16 +1,15 @@
 ﻿using CustomerManager.Repository.Model;
-using Kafka.Utility.Messages;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using SupplierManager.Shared.DTO;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Utility.Kafka.MessageHandlers;
 
 namespace CustomerManager.Business.Factory
 {
     public static class TransactionalOutboxFactory
     {
+		public static TransactionalOutbox CreateInsert(ProductDtoForKafka dto) => Create(dto, Operations.Insert);
+
+		private static TransactionalOutbox Create(ProductDtoForKafka dto, string operation) => Create(nameof(ProductDtoForKafka), dto, operation);
 		private static TransactionalOutbox Create<TDTO>(string table, TDTO dto, string operation) where TDTO : class, new()
 		{
 
@@ -19,12 +18,11 @@ namespace CustomerManager.Business.Factory
 				Dto = dto,
 				Operation = operation
 			};
-			opMsg.CheckMessage();
 
 			return new TransactionalOutbox()
 			{
-				Tabella = table,
-				Messaggio = JsonSerializer.Serialize(opMsg)
+				Table = table,
+				Message = JsonSerializer.Serialize(opMsg)
 			};
 		}
 	}

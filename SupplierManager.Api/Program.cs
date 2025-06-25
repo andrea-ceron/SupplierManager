@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using SupplierManager.Api.Middlewares;
 using SupplierManager.Business;
 using SupplierManager.Business.Abstraction;
+using SupplierManager.Business.Kafka;
 using SupplierManager.Repository;
 using SupplierManager.Repository.Abstraction;
+using Utility.Kafka.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -20,6 +22,11 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
+builder.Services.AddSingleton(p => ActivatorUtilities.CreateInstance<Subject>(p));
+builder.Services.AddSingleton<IRawMaterialsObservable>(p => p.GetRequiredService<Subject>());
+builder.Services.AddSingleton<IRawMaterialObserver>(p => p.GetRequiredService<Subject>());
+builder.Services.AddKafkaProducer<KafkaTopicsOutput, ProducerServiceWithSubscription>(builder.Configuration);
+
 builder.Logging.AddConsole();
 
 var app = builder.Build();

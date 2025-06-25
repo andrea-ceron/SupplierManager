@@ -5,6 +5,7 @@ using System.Linq;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
 using System.Numerics;
 using Microsoft.EntityFrameworkCore.Storage;
+using CustomerManager.Repository.Model;
 
 namespace SupplierManager.Repository
 {
@@ -157,6 +158,29 @@ namespace SupplierManager.Repository
 		}
 		#endregion
 
+		#region TransactionalOtbox
+		public async Task<IEnumerable<TransactionalOutbox>> GetAllTransactionalOutbox(CancellationToken ct = default)
+		{
+			return await  dbContext.TransactionalOutboxes
+				.ToListAsync(ct);
+		}
+		public async Task DeleteTransactionalOutboxAsync(long id, CancellationToken cancellationToken = default)
+		{
+			dbContext.TransactionalOutboxes.Remove(await GetTransactionalOutboxByKeyAsync(id, cancellationToken) 
+				?? throw new ArgumentException($"TransactionalOutbox con id {id} non trovato", nameof(id)));
+		}
+
+		public async Task<TransactionalOutbox?> GetTransactionalOutboxByKeyAsync(long id, CancellationToken cancellationToken = default)
+		{
+			return await dbContext.TransactionalOutboxes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+		}
+
+		public async Task InsertTransactionalOutboxAsync(TransactionalOutbox transactionalOutbox, CancellationToken cancellationToken = default)
+		{
+			await dbContext.TransactionalOutboxes.AddAsync(transactionalOutbox);
+		}
+		#endregion
+		
 		public async Task SaveChanges(CancellationToken ct = default)
 		{
 			await dbContext.SaveChangesAsync(ct);
@@ -182,8 +206,6 @@ namespace SupplierManager.Repository
 				}
 			}
 		}
-
-
 
 	}
 }

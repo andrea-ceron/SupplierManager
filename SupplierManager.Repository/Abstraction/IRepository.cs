@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CustomerManager.Repository.Model;
 
 namespace SupplierManager.Repository.Abstraction
 {
@@ -42,14 +43,23 @@ namespace SupplierManager.Repository.Abstraction
 		#region ProductOrder
 		public Task DeleteProductOrder(ProductOrder productOrder, CancellationToken ct = default);
 		public Task<ProductOrder> CreateProductOrderAsync(ProductOrder model, CancellationToken ct = default);
-		#endregion
-
-		public Task SaveChanges(CancellationToken ct = default);
-		public Task CreateTransaction(Func<Task> action);
 		public Task DeleteAllProductOrdersByOrderIdAsync(int orderId, CancellationToken ct = default);
 		public Task<List<ProductOrder>> GetAllProductOrderByOrderIdAsync(int orderId, CancellationToken ct = default);
 		public Task<List<ProductOrder>> GetAllProductOrderByProductIdAsync(int productId, CancellationToken ct = default);
+		#endregion
 
+
+		#region TransactionalOutbox
+		public Task<IEnumerable<TransactionalOutbox>> GetAllTransactionalOutbox(CancellationToken ct = default);
+		Task DeleteTransactionalOutboxAsync(long id, CancellationToken cancellationToken = default);
+		public Task<TransactionalOutbox?> GetTransactionalOutboxByKeyAsync(long id, CancellationToken cancellationToken = default);
+		public Task InsertTransactionalOutboxAsync(TransactionalOutbox transactionalOutbox, CancellationToken cancellationToken = default);
+
+		#endregion
+
+
+		public Task SaveChanges(CancellationToken ct = default);
+		public Task CreateTransaction(Func<Task> action);
 
 
 	}

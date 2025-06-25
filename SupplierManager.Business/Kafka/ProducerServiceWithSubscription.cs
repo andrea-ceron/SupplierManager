@@ -1,82 +1,73 @@
 ﻿using CustomerManager.Repository.Model;
-using Kafka.Utility.Abstractions.Clients;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SupplierManager.Business.Abstraction;
 using SupplierManager.Repository.Abstraction;
-
+using SupplierManager.Repository.Model;
+using Utility.Kafka.Abstraction.Clients;
+using Utility.Kafka.ExceptionManager;
 
 namespace SupplierManager.Business.Kafka;
+
 public class ProducerServiceWithSubscription(
-    ILogger<KafkaUtility.Services.ProducerServiceWithSubscription> logger
-    , IProducerClient<string, string> producerClient
-    , IOptions<KafkaTopicsOutput> optionsTopics
-    , IServiceProvider serviceProvider
-    , IServiceScopeFactory serviceScopeFactory
-    , IUniprPagamentiObservable observable)
-    : KafkaUtility.Services.ProducerServiceWithSubscription(logger, serviceProvider)
+	IServiceProvider serviceProvider,
+	ErrorManagerMiddleware errormanager,
+	IOptions<KafkaTopicsOutput> optionTopics
+	, IServiceScopeFactory serviceScopeFactory
+	, IProducerClient<string, string> producerClient
+	, IRawMaterialsObservable observable
+
+	)
+	: Utility.Kafka.Services.ProducerServiceWithSubscription(serviceProvider, errormanager)
 {
+	protected override IEnumerable<string> GetTopics()
+	{
+		return optionTopics.Value.GetTopics();
+	}
 
-    /// <summary>
-    /// Effettuiamo la subscribe dell'observable NuovoTransactionalOutbox: ogni qualvolta
-    /// viene inoltrata una notifica tramite l'observer <see cref="IUniprPagamentiObserver"/>
-    /// eseguiamo l'azione definita, ovvero marchiamo come completato il tcs invocando il
-    /// metodo TrySetResult()
-    /// </summary>
-    /// <param name="tcs"></param>
-    /// <returns></returns>
-    protected override IDisposable Subscribe(TaskCompletionSource tcs)
-    {
-        return observable.NuovoVersamento.Subscribe((change) => tcs.TrySetResult());
-    }
+	protected override IDisposable Subscribe(TaskCompletionSource<bool> tcs)
+	{
+		return observable.AddRawMaterial.Subscribe((change) => tcs.TrySetResult(true));
+	}
 
-    /// <inheritdoc/>
-    protected override IEnumerable<string> GetTopics()
-    {
-        return optionsTopics.Value.GetTopics();
-    }
+	protected override async Task OperationsAsync(CancellationToken cancellationToken)
+	{
+		using IServiceScope scope = serviceScopeFactory.CreateScope();
+		IRepository repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+		IEnumerable<TransactionalOutbox> transactionalOutboxes = (await repository.GetAllTransactionalOutbox(cancellationToken)).OrderBy(x => x.Id);
+		if (!transactionalOutboxes.Any())
+		{
+			//logger.LogInformation($"Non ci sono TransactionalOutbox da elaborare");
+			return;
+		}
 
-    protected override async Task OperationsAsync(CancellationToken cancellationToken) {
-        using IServiceScope scope = serviceScopeFactory.CreateScope();
-        IRepository repository = scope.ServiceProvider.GetRequiredService<IRepository>();
+		foreach (TransactionalOutbox elem in transactionalOutboxes)
+		{
+			string topic = elem.Table switch
+			{
+				nameof(Product) => optionTopics.Value.RawMaterials,
+				_ => throw new ArgumentOutOfRangeException($"La tabella {elem.Table} non è prevista come topic nel Producer")
+			};
+			try
+			{
+				await producerClient.ProduceAsync(topic, elem.Id.ToString(), elem.Message, null, cancellationToken);
+				await repository.DeleteTransactionalOutboxAsync(elem.Id, cancellationToken);
+				await repository.SaveChanges(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				//logger.LogError(ex, "Errore durante la produzione del messaggio per il topic {topic} con id {id}", topic, elem.Id);
+				continue;
+			}
 
-        logger.LogInformation("Acquisizione dei TransactionalOutbox da elaborare...");
-        IEnumerable<TransactionalOutbox> transactionalOutboxList = (await repository.GetAllTransactionalOutboxAsync(cancellationToken)).OrderBy(x => x.Id);
-        if (!transactionalOutboxList.Any()) {
-            logger.LogInformation($"Non ci sono TransactionalOutbox da elaborare");
-            return;
-        }
+			//logger.LogInformation("Eliminazione {groupMsg}...", groupMsg);
+			
+			//logger.LogInformation("Record eliminato");
+		}
+	}
 
-        logger.LogInformation("Ci sono {Count} TransactionalOutbox da elaborare", transactionalOutboxList.Count());
 
-        foreach (TransactionalOutbox tran in transactionalOutboxList) {
-            string groupMsg = $"del record {nameof(TransactionalOutbox)} con " +
-                    $"{nameof(TransactionalOutbox.Id)} = {tran.Id}, " +
-                    $"{nameof(TransactionalOutbox.Tabella)} = '{tran.Tabella}' e " +
-                    $"{nameof(TransactionalOutbox.Messaggio)} = '{tran.Messaggio}'";
 
-            logger.LogInformation("Elaborazione {groupMsg}...", groupMsg);
 
-            try {
+	}
 
-                logger.LogInformation("Determinazione del topic...");
-                string topic = tran.Tabella switch {
-                    nameof(Versamento) => optionsTopics.Value.Versamenti,
-                    _ => throw new ArgumentOutOfRangeException($"La tabella {tran.Tabella} non è prevista come topic nel Producer")
-                };
-
-                logger.LogInformation("Scrittura del messaggio Kafka sul topic '{topic}'...", topic);
-                await producerClient.ProduceAsync(topic, tran.Id.ToString(), tran.Messaggio, cancellationToken);
-
-                logger.LogInformation("Eliminazione {groupMsg}...", groupMsg);
-                await repository.DeleteTransactionalOutboxAsync(tran.Id, cancellationToken);
-
-                await repository.SaveChanges(cancellationToken);
-                logger.LogInformation("Record eliminato");
-
-            } catch (Exception ex) {
-                logger.LogError(ex, "Si è verificata un'eccezione nel metodo ProducerService.OperationsAsync durante l'elaborazione {groupMsg}: {ex}", groupMsg, ex);
-            }
-        }
-    }
-}

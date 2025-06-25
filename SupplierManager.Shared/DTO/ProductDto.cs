@@ -10,9 +10,10 @@ namespace SupplierManager.Shared.DTO
 	{
         public int SupplierProductCode { get; set; }
         public decimal Price { get; set; }
-        public int MinQuantity { get; set; }
 		public int? SupplierId { get; set; }
 
+		public int MinQuantityForOrder { get; set; }
+		public int AvailableQuantity { get; set; }
 
 	}
 
@@ -20,7 +21,8 @@ namespace SupplierManager.Shared.DTO
 	{
 		public int SupplierProductCode { get; set; }
 		public decimal Price { get; set; }
-		public int MinQuantity { get; set; }
+		public int MinQuantityForOrder { get; set; }
+		public int AvailableQuantity { get; set; }
 
 	}
 
@@ -29,9 +31,10 @@ namespace SupplierManager.Shared.DTO
 		public int Id { get; set; }
 		public int SupplierProductCode { get; set; }
 		public decimal Price { get; set; }
-		public int MinQuantity { get; set; }
+		public int MinQuantityForOrder { get; set; }
 		public List<ReadProductOrderDto> ProductOrders { get; set; }
 		public int SupplierId { get; set; }
+		public int AvailableQuantity { get; set; }
 	}
 
 
@@ -40,8 +43,17 @@ namespace SupplierManager.Shared.DTO
 		public int? Id { get; set; }
 		public int? SupplierProductCode { get; set; }
 		public decimal? Price { get; set; }
-		public int? MinQuantity { get; set; }
-		public int SupplierId { get; set; } 
-
+		public int SupplierId { get; set; }
+		public int MinQuantityForOrder { get; set; }
+		public int AvailableQuantity { get; set; }
 	}
+
+	public class ProductDtoForKafka
+	{
+		public int Id { get; set; }
+		public int SupplierProductCode { get; set; }
+		public int AvailableQuantity { get; set; }
+		public int SupplierId { get; set; }
+	}
+
 }

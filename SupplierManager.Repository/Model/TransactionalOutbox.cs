@@ -7,6 +7,6 @@ public class TransactionalOutbox
 {
 	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 	public long Id { get; set; }
-	public string Tabella { get; set; } = string.Empty;
-	public string Messaggio { get; set; } = string.Empty;
+	public string Table { get; set; } = string.Empty;
+	public string Message { get; set; } = string.Empty;
 }

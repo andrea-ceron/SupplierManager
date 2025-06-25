@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CustomerManager.Repository.Model;
+using Microsoft.EntityFrameworkCore;
 using SupplierManager.Repository.Model;
 using System;
 using System.Collections.Generic;
@@ -49,12 +50,15 @@ public class SupplierDbContext(DbContextOptions<SupplierDbContext> options): DbC
 			.Property(s => s.Id)
 			.ValueGeneratedOnAdd();
 
+		mb.Entity<TransactionalOutbox>().HasKey(s => s.Id);
+
 		base.OnModelCreating(mb);
 	}
 	public DbSet<Supplier> Suppliers { get; set; }
 	public DbSet<Order> Orders { get; set; }
 	public DbSet<Product> Products { get; set; }
 	public DbSet<ProductOrder> ProductOrders { get; set; }
+	public DbSet<TransactionalOutbox> TransactionalOutboxes { get; set; }
 
 
 }

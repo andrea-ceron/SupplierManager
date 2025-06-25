@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CustomerManager.Business.Factory;
 using Microsoft.Extensions.Logging;
 using SupplierManager.Business.Abstraction;
 using SupplierManager.Repository.Abstraction;
@@ -7,7 +8,7 @@ using SupplierManager.Shared.DTO;
 
 namespace SupplierManager.Business;
 
-public class Business(IRepository repository, IMapper mapper, ILogger<Business> logger) : IBusiness
+public class Business(IRepository repository, IMapper mapper, ILogger<Business> logger, IRawMaterialObserver observer) : IBusiness
 {
 	#region Order
 	public async Task CreateOrderAsync(CreateOrderDto createOrderDto, CancellationToken ct = default)
@@ -30,7 +31,7 @@ public class Business(IRepository repository, IMapper mapper, ILogger<Business> 
 					throw new ExceptionHandler($"Prodotto con ID {product.ProductId} non trovato.", 404);
 				if (readProduct.SupplierId != newOrder.SupplierId)
 					throw new ExceptionHandler("L'id del prodotto non corrisponde ad un prodotto venduto dal fornitore inserito.", 400);
-				if(readProduct.MinQuantity > product.Quantity)
+				if(readProduct.MinQuantityForOrder > product.Quantity)
 					throw new ExceptionHandler("Quantità richiesta inferriore alla quantità minima ordinabile.", 400);
 				product.OrderId = newOrder.Id;
 				await repository.CreateProductOrderAsync(product, ct);
@@ -140,14 +141,21 @@ public class Business(IRepository repository, IMapper mapper, ILogger<Business> 
 		List<Product> productList = mapper.Map<List<Product>>(productDto);
 		await repository.CreateTransaction(async () =>
 		{
-			var tasks = productList.Select(product => repository.CreateProductAsync(product, ct));
-			await Task.WhenAll(tasks);
-
-			await repository.SaveChanges(ct);
+			foreach (var product in productList)
+			{
+				var res = await repository.CreateProductAsync(product, ct);
+				await repository.SaveChanges(ct);
+				var recordKafka = mapper.Map<ProductDtoForKafka>(res);
+				var record = TransactionalOutboxFactory.CreateInsert(recordKafka);
+				await repository.InsertTransactionalOutboxAsync(record, ct);
+			}
+				await repository.SaveChanges(ct);
 		});
+		observer.AddRawMaterial.OnNext(1);
 
-		
 	}
+
+
 	public async Task UpdateProductAsync(UpdateProductDto productDto, CancellationToken ct = default)
 	{
 		var model = mapper.Map<Product>(productDto);
