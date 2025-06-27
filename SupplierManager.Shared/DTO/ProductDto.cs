@@ -14,6 +14,8 @@ namespace SupplierManager.Shared.DTO
 
 		public int MinQuantityForOrder { get; set; }
 		public int AvailableQuantity { get; set; }
+		public string ProductName { get; set; } = string.Empty;
+
 
 	}
 
@@ -23,6 +25,8 @@ namespace SupplierManager.Shared.DTO
 		public decimal Price { get; set; }
 		public int MinQuantityForOrder { get; set; }
 		public int AvailableQuantity { get; set; }
+		public string ProductName { get; set; } = string.Empty;
+
 
 	}
 
@@ -35,6 +39,8 @@ namespace SupplierManager.Shared.DTO
 		public List<ReadProductOrderDto> ProductOrders { get; set; }
 		public int SupplierId { get; set; }
 		public int AvailableQuantity { get; set; }
+		public string ProductName { get; set; } = string.Empty;
+
 	}
 
 
@@ -46,14 +52,16 @@ namespace SupplierManager.Shared.DTO
 		public int SupplierId { get; set; }
 		public int MinQuantityForOrder { get; set; }
 		public int AvailableQuantity { get; set; }
+
 	}
 
 	public class ProductDtoForKafka
 	{
 		public int Id { get; set; }
-		public int SupplierProductCode { get; set; }
 		public int AvailableQuantity { get; set; }
 		public int SupplierId { get; set; }
+		public string ProductName { get; set; } = string.Empty;
 	}
+
 
 }

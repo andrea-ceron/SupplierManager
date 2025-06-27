@@ -45,7 +45,7 @@ public class ProducerServiceWithSubscription(
 		{
 			string topic = elem.Table switch
 			{
-				nameof(Product) => optionTopics.Value.RawMaterials,
+				nameof(Product) => optionTopics.Value.RawMaterial,
 				_ => throw new ArgumentOutOfRangeException($"La tabella {elem.Table} non è prevista come topic nel Producer")
 			};
 			try

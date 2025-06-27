@@ -7,7 +7,11 @@ namespace CustomerManager.Business.Factory
 {
     public static class TransactionalOutboxFactory
     {
+
 		public static TransactionalOutbox CreateInsert(ProductDtoForKafka dto) => Create(dto, Operations.Insert);
+		public static TransactionalOutbox CreateUpdate(ProductDtoForKafka dto) => Create(dto, Operations.Update);
+		public static TransactionalOutbox CreateDelete(ProductDtoForKafka dto) => Create(dto, Operations.Delete);
+
 
 		private static TransactionalOutbox Create(ProductDtoForKafka dto, string operation) => Create(nameof(ProductDtoForKafka), dto, operation);
 		private static TransactionalOutbox Create<TDTO>(string table, TDTO dto, string operation) where TDTO : class, new()
@@ -25,5 +29,7 @@ namespace CustomerManager.Business.Factory
 				Message = JsonSerializer.Serialize(opMsg)
 			};
 		}
+
+
 	}
 }

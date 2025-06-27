@@ -4,6 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  <TargetFramework>net8.0</TargetFramework>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageId>SupplierManger.Shared</PackageId>
+	  <AssemblyVersion>1.0.1</AssemblyVersion>
+	  <PackageVersion>1.0.1</PackageVersion>
+	  <Authors>Andrea Ceron</Authors>
+	  <IsPackable>true</IsPackable>
+	  <Description>Libreria contenente DTO relativi a SupplierManager</Description>
   </PropertyGroup>
 
 </Project>

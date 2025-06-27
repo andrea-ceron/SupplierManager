@@ -7,8 +7,8 @@ using Utility.Kafka.DependencyInjection;
 
 namespace SupplierManager.Business.Kafka;
 
-public class KafkaTopicsOutput : AbstractKafkaTopics
+public class KafkaTopicsOutput : AbstractOutputKafkaTopics
 {
-	public string RawMaterials { get; set; } = "raw-materials";
-	public override IEnumerable<string> GetTopics() => [RawMaterials];
+	public string RawMaterial { get; set; } = "raw-materials";
+	public override IEnumerable<string> GetTopics() => [RawMaterial];
 }

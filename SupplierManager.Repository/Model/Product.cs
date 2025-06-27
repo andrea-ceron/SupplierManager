@@ -16,5 +16,7 @@ namespace SupplierManager.Repository.Model
 		public List<ProductOrder>? ProductOrders { get; set; }
 		public int SupplierId { get; set; }
 		public Supplier Supplier { get; set; }
+		public string ProductName { get; set; } = string.Empty;
+
 	}
 }

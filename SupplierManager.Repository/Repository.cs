@@ -179,8 +179,10 @@ namespace SupplierManager.Repository
 		{
 			await dbContext.TransactionalOutboxes.AddAsync(transactionalOutbox);
 		}
+
+
 		#endregion
-		
+
 		public async Task SaveChanges(CancellationToken ct = default)
 		{
 			await dbContext.SaveChangesAsync(ct);

@@ -158,9 +158,19 @@ public class Business(IRepository repository, IMapper mapper, ILogger<Business> 
 
 	public async Task UpdateProductAsync(UpdateProductDto productDto, CancellationToken ct = default)
 	{
-		var model = mapper.Map<Product>(productDto);
-		var updateProduct = await repository.UpdateProductAsync(model, ct);
-		await repository.SaveChanges(ct);
+		await repository.CreateTransaction(async () =>
+		{
+			var model = mapper.Map<Product>(productDto);
+			var updateProduct = await repository.UpdateProductAsync(model, ct);
+			await repository.SaveChanges(ct);
+			var dtoUpdateProduct = mapper.Map<ProductDtoForKafka>(productDto);
+			var record = TransactionalOutboxFactory.CreateUpdate(dtoUpdateProduct);
+			await repository.InsertTransactionalOutboxAsync(record, ct);
+			await repository.SaveChanges(ct);
+
+		});
+		observer.AddRawMaterial.OnNext(1);
+
 	}
 	public async Task<List<ReadProductDto>> GetProductListBySupplierId(int SupplierId, CancellationToken ct = default)
 	{
@@ -174,9 +184,19 @@ public class Business(IRepository repository, IMapper mapper, ILogger<Business> 
 	public async Task DeleteProductAsync(int productId, CancellationToken ct = default)
 	{
 		var listOfProductOrder = await repository.GetAllProductOrderByProductIdAsync(productId, ct);
-		if (listOfProductOrder.Count > 0) throw new ExceptionHandler ("Non e possibile eliminare il prodotto, eliminare gli ordini corrispondenti", 403);
-		await repository.DeleteProduct(productId, ct);
-		await repository.SaveChanges(ct);
+		var productDto = await repository.GetProductById(productId, ct);
+		await repository.CreateTransaction(async () =>
+		{
+			if (listOfProductOrder.Count > 0) throw new ExceptionHandler("Non e possibile eliminare il prodotto, eliminare gli ordini corrispondenti", 403);
+			await repository.DeleteProduct(productId, ct);
+			await repository.SaveChanges(ct);
+			var dtoUpdateProduct = mapper.Map<ProductDtoForKafka>(productDto);
+			var record = TransactionalOutboxFactory.CreateUpdate(dtoUpdateProduct);
+			await repository.InsertTransactionalOutboxAsync(record, ct);
+			await repository.SaveChanges(ct);
+		});
+		observer.AddRawMaterial.OnNext(1);
+
 	}
 	#endregion
 
